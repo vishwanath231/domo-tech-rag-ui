@@ -4,13 +4,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useState } from "react"
 
 const models = [
-  { id: "gpt-4", name: "GPT-4", description: "Most capable model" },
-  { id: "gpt-3.5", name: "GPT-3.5", description: "Faster responses" },
-  { id: "claude", name: "Claude", description: "Anthropic's model" },
+  { id: "llama-3.1-8b-instant", name: "llama-3.1-8b-instant", description: "Fast model" },
+  { id: "openai/gpt-oss-120b", name: "openai/gpt-oss-120b", description: "Most powerful" },
+  { id: "openai/gpt-oss-20b", name: "openai/gpt-oss-20b", description: "Balanced model" },
 ]
 
 export function ModelSelector() {
-  const [selectedModel, setSelectedModel] = useState(models[1]) // Default to GPT-3.5
+  const [selectedModel, setSelectedModel] = useState(models[0]) // Default to GPT-3.5
   const [open, setOpen] = useState(false)
 
   return (

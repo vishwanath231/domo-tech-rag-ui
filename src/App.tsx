@@ -18,14 +18,6 @@ function App() {
 
   const currentChat = chats.find((chat) => chat.id === currentChatId);
 
-  // Debug logging
-  useEffect(() => {
-    console.log("Current chat changed:", {
-      currentChatId,
-      messagesCount: currentChat?.messages.length,
-    });
-  }, [currentChatId, currentChat]);
-
   // Create initial chat if none exists
   useEffect(() => {
     if (chats.length === 0) {

@@ -117,12 +117,17 @@ export const useChatStore = create<ChatState>()((set) => ({
       if (existingChat) {
         // Update existing chat with messages
         console.log("Updating existing chat");
+        // Sort messages by timestamp in ascending order (oldest first)
+        const sortedMessages = [...messages].sort(
+          (a, b) =>
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
         return {
           chats: state.chats.map((chat) =>
             chat.id === sessionId
               ? {
                   ...chat,
-                  messages: messages.map((msg) => ({
+                  messages: sortedMessages.map((msg) => ({
                     id: msg._id,
                     role: msg.role as "user" | "assistant",
                     content: msg.content,
@@ -136,16 +141,21 @@ export const useChatStore = create<ChatState>()((set) => ({
       } else {
         // Create new chat with messages
         console.log("Creating new chat");
+        // Sort messages by timestamp in ascending order (oldest first)
+        const sortedMessages = [...messages].sort(
+          (a, b) =>
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
         const newChat: Chat = {
           id: sessionId,
           title,
-          messages: messages.map((msg) => ({
+          messages: sortedMessages.map((msg) => ({
             id: msg._id,
             role: msg.role as "user" | "assistant",
             content: msg.content,
             createdAt: msg.timestamp,
           })),
-          createdAt: messages[0]?.timestamp || new Date().toISOString(),
+          createdAt: sortedMessages[0]?.timestamp || new Date().toISOString(),
         };
 
         console.log("New chat created:", newChat);

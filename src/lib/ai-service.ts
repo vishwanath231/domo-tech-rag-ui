@@ -25,10 +25,8 @@ export async function streamResponse(
   const chunks = assistantAnswer.split("");
 
   for (const chunk of chunks) {
-    // Simulate typing speed
-    await new Promise((resolve) =>
-      setTimeout(resolve, 15 + Math.random() * 30)
-    );
+    // Simulate typing speed (very fast)
+    await new Promise((resolve) => setTimeout(resolve, 1 + Math.random() * 2));
     onChunk(chunk);
   }
 }
