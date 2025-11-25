@@ -24,6 +24,16 @@ interface SidebarContentProps {
 
 function SidebarContent({ onToggle, isCollapsed = false }: SidebarContentProps) {
   const { createChat } = useChatStore()
+
+  const logout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+    google.accounts.id.disableAutoSelect();  // important!
+    window.location.reload();
+  }
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Logo */}
@@ -155,11 +165,11 @@ function SidebarContent({ onToggle, isCollapsed = false }: SidebarContentProps) 
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src="" alt="User" />
-                      <AvatarFallback className="bg-orange-400 text-white">VA</AvatarFallback>
+                      <AvatarFallback className="bg-orange-400 text-white">{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 overflow-hidden">
-                      <div className="truncate font-medium text-gray-900">Vishwanath A</div>
-                      <div className="truncate text-sm text-gray-500">@vishwanathvishwabai</div>
+                      <div className="truncate font-medium text-gray-900">{user.name}</div>
+                      <div className="truncate text-sm text-gray-500">{user.email}</div>
                     </div>
                   </div>
                 </div>
@@ -168,7 +178,8 @@ function SidebarContent({ onToggle, isCollapsed = false }: SidebarContentProps) 
                 
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-start gap-3 px-3 text-gray-900"
+                  className="w-full justify-start gap-3 px-3 text-gray-900 cursor-pointer"
+                  onClick={logout}
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Log out</span>
@@ -185,11 +196,11 @@ function SidebarContent({ onToggle, isCollapsed = false }: SidebarContentProps) 
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" alt="User" />
-                  <AvatarFallback className="bg-orange-400 text-white text-sm">VA</AvatarFallback>
+                  <AvatarFallback className="bg-orange-400 text-white text-sm">{user.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-1 flex-col items-start overflow-hidden">
-                  <span className="truncate text-sm font-medium text-gray-900">Vishwanath A</span>
-                  <span className="truncate text-xs text-gray-500">@vishwanathvishwabai</span>
+                  <span className="truncate text-sm font-medium text-gray-900">{user.name}</span>
+                  <span className="truncate text-xs text-gray-500">{user.email}</span>
                 </div>
               </Button>
             </PopoverTrigger>
@@ -199,11 +210,11 @@ function SidebarContent({ onToggle, isCollapsed = false }: SidebarContentProps) 
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src="" alt="User" />
-                      <AvatarFallback className="bg-orange-400 text-white">VA</AvatarFallback>
+                      <AvatarFallback className="bg-orange-400 text-white">{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 overflow-hidden">
-                      <div className="truncate font-medium text-gray-900">Vishwanath A</div>
-                      <div className="truncate text-sm text-gray-500">@vishwanathvishwabai</div>
+                      <div className="truncate font-medium text-gray-900">{user.name}</div>
+                      <div className="truncate text-xs text-gray-500">{user.email}</div>
                     </div>
                   </div>
                 </div>
@@ -212,7 +223,8 @@ function SidebarContent({ onToggle, isCollapsed = false }: SidebarContentProps) 
                 
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-start gap-3 px-3 text-gray-900"
+                  className="w-full justify-start gap-3 px-3 text-gray-900 cursor-pointer"
+                  onClick={logout}
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Log out</span>
