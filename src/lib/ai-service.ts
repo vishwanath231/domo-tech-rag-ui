@@ -2,26 +2,27 @@ export async function streamResponse(
   prompt: string,
   onChunk: (chunk: string) => void
 ) {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  const sessionId = localStorage.getItem("session_id");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const response = `This is a simulated response to: "${prompt}". 
-  
-Here is some example code:
-\`\`\`typescript
-const greeting = "Hello World";
-console.log(greeting);
-\`\`\`
+  const response = await fetch(`http://127.0.0.1:8000/chat/${sessionId}/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      user_id: user._id,
+      message: prompt,
+    }),
+  });
 
-I can generate long text to test the scrolling behavior. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+  const data = await response.json();
 
-- Point 1
-- Point 2
-- Point 3
+  // Extract the assistant_answer from the response
+  const assistantAnswer = data?.assistant_answer || "";
 
-Hope this helps!`;
-
-  const chunks = response.split("");
+  // Split the answer into chunks for streaming effect
+  const chunks = assistantAnswer.split("");
 
   for (const chunk of chunks) {
     // Simulate typing speed

@@ -43,8 +43,6 @@ export function ChatList({ messages, isTyping }: ChatListProps) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  console.log(messages)
-
   return (
     <div className="relative flex-1 overflow-hidden">
       <div 

@@ -18,6 +18,14 @@ function App() {
 
   const currentChat = chats.find((chat) => chat.id === currentChatId);
 
+  // Debug logging
+  useEffect(() => {
+    console.log("Current chat changed:", {
+      currentChatId,
+      messagesCount: currentChat?.messages.length,
+    });
+  }, [currentChatId, currentChat]);
+
   // Create initial chat if none exists
   useEffect(() => {
     if (chats.length === 0) {
@@ -28,41 +36,105 @@ function App() {
   const handleSendMessage = async (content: string) => {
     if (!currentChatId) return;
 
-    // Add user message
-    const userMessageId = uuidv4();
-    addMessage(currentChatId, {
-      id: userMessageId,
-      role: "user",
-      content,
-    });
+    const user_id = JSON.parse(localStorage.getItem("user") || "{}")?._id;
+    const session_id = localStorage.getItem("session_id");
 
-    // Add assistant message placeholder
-    const assistantMessageId = uuidv4();
-    addMessage(currentChatId, {
-      id: assistantMessageId,
-      role: "assistant",
-      content: "",
-    });
+    if (!session_id || session_id === "" || session_id === null) {
+      console.log("No session ID found, creating new session");
+      fetch(`http://127.0.0.1:8000/chat/session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id,
+          title: content,
+        }),
+      })
+        .then((res) => res.json())
+        .then(async (data) => {
+          localStorage.setItem("session_id", data.session._id);
+          // Add user message
+          const userMessageId = uuidv4();
+          addMessage(currentChatId, {
+            id: userMessageId,
+            role: "user",
+            content,
+          });
 
-    setIsTyping(true);
+          // Add assistant message placeholder
+          const assistantMessageId = uuidv4();
+          addMessage(currentChatId, {
+            id: assistantMessageId,
+            role: "assistant",
+            content: "",
+          });
 
-    try {
-      // Stream the response
-      let fullResponse = "";
-      await streamResponse(content, (chunk) => {
-        setIsTyping(false);
-        fullResponse += chunk;
-        updateMessageContent(currentChatId, assistantMessageId, fullResponse);
+          setIsTyping(true);
+
+          try {
+            // Stream the response
+            let fullResponse = "";
+            await streamResponse(content, (chunk) => {
+              setIsTyping(false);
+              fullResponse += chunk;
+              updateMessageContent(
+                currentChatId,
+                assistantMessageId,
+                fullResponse
+              );
+            });
+          } catch (error) {
+            console.error("Error streaming response:", error);
+            updateMessageContent(
+              currentChatId,
+              assistantMessageId,
+              "Sorry, I encountered an error. Please try again."
+            );
+          } finally {
+            setIsTyping(false);
+          }
+        })
+        .catch((error) => {
+          console.error("Error creating session:", error);
+        });
+    } else {
+      // Add user message
+      const userMessageId = uuidv4();
+      addMessage(currentChatId, {
+        id: userMessageId,
+        role: "user",
+        content,
       });
-    } catch (error) {
-      console.error("Error streaming response:", error);
-      updateMessageContent(
-        currentChatId,
-        assistantMessageId,
-        "Sorry, I encountered an error. Please try again."
-      );
-    } finally {
-      setIsTyping(false);
+
+      // Add assistant message placeholder
+      const assistantMessageId = uuidv4();
+      addMessage(currentChatId, {
+        id: assistantMessageId,
+        role: "assistant",
+        content: "",
+      });
+
+      setIsTyping(true);
+
+      try {
+        // Stream the response
+        let fullResponse = "";
+        await streamResponse(content, (chunk) => {
+          setIsTyping(false);
+          fullResponse += chunk;
+          updateMessageContent(currentChatId, assistantMessageId, fullResponse);
+        });
+      } catch (error) {
+        console.error("Error streaming response:", error);
+        updateMessageContent(
+          currentChatId,
+          assistantMessageId,
+          "Sorry, I encountered an error. Please try again."
+        );
+      } finally {
+        setIsTyping(false);
+      }
     }
   };
 
@@ -107,7 +179,9 @@ function App() {
       ) : (
         <div className="flex h-screen w-full items-center justify-center">
           <div className="flex flex-col items-center">
-            <div className="text-2xl font-bold text-gray-900 mb-4">Domo Tech Chatbot</div>
+            <div className="text-2xl font-bold text-gray-900 mb-4">
+              Domo Tech Chatbot
+            </div>
             <GoogleLoginButton />
           </div>
         </div>

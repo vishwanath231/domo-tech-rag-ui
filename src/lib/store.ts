@@ -9,6 +9,15 @@ interface Message {
   createdAt: string;
 }
 
+interface ApiMessage {
+  _id: string;
+  session_id: string;
+  user_id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
+
 interface Chat {
   id: string;
   title: string;
@@ -26,6 +35,11 @@ interface ChatState {
     chatId: string,
     messageId: string,
     content: string
+  ) => void;
+  loadChatHistory: (
+    sessionId: string,
+    messages: ApiMessage[],
+    title?: string
   ) => void;
 }
 
@@ -87,5 +101,59 @@ export const useChatStore = create<ChatState>()((set) => ({
         return chat;
       }),
     }));
+  },
+
+  loadChatHistory: (sessionId, messages, title = "Chat History") => {
+    console.log("loadChatHistory called with:", {
+      sessionId,
+      messagesCount: messages.length,
+      title,
+    });
+    set((state) => {
+      // Check if chat already exists
+      const existingChat = state.chats.find((chat) => chat.id === sessionId);
+      console.log("Existing chat found:", existingChat ? "Yes" : "No");
+
+      if (existingChat) {
+        // Update existing chat with messages
+        console.log("Updating existing chat");
+        return {
+          chats: state.chats.map((chat) =>
+            chat.id === sessionId
+              ? {
+                  ...chat,
+                  messages: messages.map((msg) => ({
+                    id: msg._id,
+                    role: msg.role as "user" | "assistant",
+                    content: msg.content,
+                    createdAt: msg.timestamp,
+                  })),
+                }
+              : chat
+          ),
+          currentChatId: sessionId,
+        };
+      } else {
+        // Create new chat with messages
+        console.log("Creating new chat");
+        const newChat: Chat = {
+          id: sessionId,
+          title,
+          messages: messages.map((msg) => ({
+            id: msg._id,
+            role: msg.role as "user" | "assistant",
+            content: msg.content,
+            createdAt: msg.timestamp,
+          })),
+          createdAt: messages[0]?.timestamp || new Date().toISOString(),
+        };
+
+        console.log("New chat created:", newChat);
+        return {
+          chats: [newChat, ...state.chats],
+          currentChatId: sessionId,
+        };
+      }
+    });
   },
 }));
