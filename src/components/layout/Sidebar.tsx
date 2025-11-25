@@ -11,21 +11,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { 
-  PenSquare, 
-  Search, 
-  LogOut, 
-  Sparkles, 
-  PanelLeft, 
-  MessageSquare, 
+import {
+  PenSquare,
+  Search,
+  LogOut,
+  Sparkles,
+  PanelLeft,
+  MessageSquare,
   Clock,
   MoreHorizontal,
-  Trash2
+  Trash2,
+  X,
 } from "lucide-react";
 import { useChatStore } from "@/lib/store";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 interface SidebarProps {
   className?: string;
@@ -45,9 +51,10 @@ function SidebarContent({
   const { createChat, loadChatHistory } = useChatStore();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-
   const [chatSession, setChatSession] = useState<any>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetch(`http://127.0.0.1:8000/chat/${user._id}/session`, {
@@ -67,6 +74,36 @@ function SidebarContent({
       });
   }, [user._id]);
 
+  // Helper function to group chats by time period
+  const getTimeGroup = (createdAt: string) => {
+    const now = new Date();
+    const chatDate = new Date(createdAt);
+    const diffTime = Math.abs(now.getTime() - chatDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0 || diffDays === 1) return "Today";
+    if (diffDays === 2) return "Yesterday";
+    if (diffDays <= 7) return "Previous 7 Days";
+    if (diffDays <= 30) return "Previous 30 Days";
+    return "Older";
+  };
+
+  // Filter and group chats based on search query
+  const filteredAndGroupedChats = useMemo(() => {
+    const filtered = chatSession.filter((session: any) =>
+      session.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const grouped: Record<string, any[]> = {};
+    filtered.forEach((session: any) => {
+      const group = getTimeGroup(session.createdAt);
+      if (!grouped[group]) grouped[group] = [];
+      grouped[group].push(session);
+    });
+
+    return grouped;
+  }, [chatSession, searchQuery]);
+
   const logout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
@@ -75,8 +112,7 @@ function SidebarContent({
     window.location.reload();
   };
 
-
-  const handleChatHistoryClick = (sessionId: string, title: string) => {
+  const handleChatHistoryClick = (sessionId: string, title: string, closeModal = false) => {
     localStorage.setItem("session_id", sessionId);
 
     // Fetch messages for the selected session
@@ -93,9 +129,13 @@ function SidebarContent({
         // Load the chat history into the store
         // API returns {messages: [...]} instead of [...]
         const messages = Array.isArray(data) ? data : data?.messages;
-        
+
         if (messages && Array.isArray(messages)) {
           loadChatHistory(sessionId, messages, title);
+          if (closeModal) {
+            setIsSearchOpen(false);
+            setSearchQuery("");
+          }
         } else {
           console.warn("Data is not an array or is null:", data);
         }
@@ -119,8 +159,10 @@ function SidebarContent({
       .then((res) => {
         if (res.ok) {
           // Remove from local state
-          setChatSession((prev: any) => prev.filter((s: any) => s._id !== sessionId));
-          
+          setChatSession((prev: any) =>
+            prev.filter((s: any) => s._id !== sessionId)
+          );
+
           // If deleted chat was active, clear session_id
           if (localStorage.getItem("session_id") === sessionId) {
             localStorage.removeItem("session_id");
@@ -164,7 +206,7 @@ function SidebarContent({
           <Button
             variant="ghost"
             className={cn(
-              "w-full justify-start gap-3 px-3 text-gray-900 hover:bg-gray-100",
+              "cursor-pointer w-full justify-start gap-3 px-3 text-gray-900 hover:bg-gray-100",
               isCollapsed && "justify-center px-0"
             )}
             title={isCollapsed ? "New chat" : undefined}
@@ -180,10 +222,11 @@ function SidebarContent({
           <Button
             variant="ghost"
             className={cn(
-              "w-full justify-start gap-3 px-3 text-gray-900 hover:bg-gray-100",
+              "cursor-pointer w-full justify-start gap-3 px-3 text-gray-900 hover:bg-gray-100",
               isCollapsed && "justify-center px-0"
             )}
             title={isCollapsed ? "Search chats" : undefined}
+            onClick={() => setIsSearchOpen(true)}
           >
             <Search className="h-5 w-5" />
             {!isCollapsed && <span>Search chats</span>}
@@ -200,7 +243,7 @@ function SidebarContent({
                   Recent Chats
                 </h3>
               </div>
-              
+
               <div className="space-y-1">
                 {isLoading ? (
                   // Loading skeleton
@@ -221,33 +264,40 @@ function SidebarContent({
                       key={session._id || index}
                       className={cn(
                         "group relative flex items-center gap-3 rounded-lg px-3 py-1.5 text-gray-700 transition-all hover:bg-gray-100",
-                        localStorage.getItem("session_id") === session._id && "bg-gray-100 text-gray-900"
+                        localStorage.getItem("session_id") === session._id &&
+                          "bg-gray-100 text-gray-900"
                       )}
                     >
                       <button
-                        className="flex flex-1 items-center gap-3 text-left"
-                        onClick={() => handleChatHistoryClick(session._id, session.title || "Untitled Chat")}
+                        className="flex flex-1 items-center gap-3 text-left min-w-0 cursor-pointer"
+                        onClick={() =>
+                          handleChatHistoryClick(
+                            session._id,
+                            session.title || "Untitled Chat"
+                          )
+                        }
                       >
                         <MessageSquare className="h-4 w-4 flex-shrink-0 text-gray-400 group-hover:text-gray-600" />
-                        <span className="flex-1 truncate text-sm text-black font-normal">
+
+                        <span className="flex-1 text-sm font-normal text-black truncate">
                           {session.title || "Untitled Chat"}
                         </span>
                       </button>
-                      
+
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem 
-                            className="gap-2 text-red-600 focus:text-red-600"
+                          <DropdownMenuItem
+                            className="gap-2 text-red-600 focus:text-red-600 cursor-pointer"
                             onClick={() => handleDeleteChat(session._id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -261,7 +311,9 @@ function SidebarContent({
                   <div className="px-3 py-6 text-center">
                     <MessageSquare className="mx-auto mb-2 h-8 w-8 text-gray-300" />
                     <p className="text-xs text-gray-400">No chat history yet</p>
-                    <p className="mt-1 text-xs text-gray-400">Start a new conversation</p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      Start a new conversation
+                    </p>
                   </div>
                 )}
               </div>
@@ -326,7 +378,7 @@ function SidebarContent({
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-3 p-4 hover:bg-gray-100"
+                className="w-full justify-start gap-3 py-8 hover:bg-gray-100 cursor-pointer"
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" alt="User" />
@@ -380,6 +432,94 @@ function SidebarContent({
           </Popover>
         )}
       </div>
+
+      {/* Search Modal */}
+      <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+        <DialogContent className="max-w-2xl p-0 gap-0" showCloseButton={false}>
+          <DialogHeader className="p-0">
+            <div className="relative border-b border-gray-200">
+              <input
+                type="text"
+                placeholder="Search chats..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-4 pr-12 text-base outline-none"
+                autoFocus
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-500 hover:text-gray-700"
+                onClick={() => {
+                  setIsSearchOpen(false);
+                  setSearchQuery("");
+                }}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </DialogHeader>
+
+          <div className="max-h-[60vh] overflow-y-auto">
+            {/* New Chat Button */}
+            <div className="border-b border-gray-200 p-3">
+              <Button
+                variant="ghost"
+                className="cursor-pointer w-full justify-start gap-3 px-3 text-gray-900 hover:bg-gray-100"
+                onClick={() => {
+                  createChat();
+                  localStorage.removeItem("session_id");
+                  setIsSearchOpen(false);
+                  setSearchQuery("");
+                }}
+              >
+                <PenSquare className="h-5 w-5" />
+                <span>New chat</span>
+              </Button>
+            </div>
+
+            {/* Grouped Chat History */}
+            <div className="p-3">
+              {Object.keys(filteredAndGroupedChats).length > 0 ? (
+                Object.entries(filteredAndGroupedChats).map(([group, sessions]) => (
+                  <div key={group} className="mb-4">
+                    <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      {group}
+                    </h3>
+                    <div className="space-y-1">
+                      {sessions.map((session: any) => (
+                        <button
+                          key={session._id}
+                          className="cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-gray-700 transition-all hover:bg-gray-100"
+                          onClick={() =>
+                            handleChatHistoryClick(
+                              session._id,
+                              session.title || "Untitled Chat",
+                              true
+                            )
+                          }
+                        >
+                          <MessageSquare className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                          <span className="flex-1 truncate text-sm">
+                            {session.title || "Untitled Chat"}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="px-3 py-8 text-center">
+                  <MessageSquare className="mx-auto mb-2 h-8 w-8 text-gray-300" />
+                  <p className="text-sm text-gray-500">
+                    {searchQuery ? "No chats found" : "No chat history yet"}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
