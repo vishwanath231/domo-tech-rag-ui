@@ -107,6 +107,8 @@ function SidebarContent({
   const logout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
+    localStorage.removeItem("session_id");
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).google?.accounts?.id?.disableAutoSelect();
     window.location.reload();
@@ -333,7 +335,7 @@ function SidebarContent({
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" alt="User" />
-                  <AvatarFallback className="bg-orange-400 text-white text-sm">
+                  <AvatarFallback className="bg-[#99ccee] text-white text-sm">
                     {user.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
@@ -345,7 +347,7 @@ function SidebarContent({
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src="" alt="User" />
-                      <AvatarFallback className="bg-orange-400 text-white">
+                      <AvatarFallback className="bg-[#99ccee] text-white">
                         {user.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
@@ -382,7 +384,7 @@ function SidebarContent({
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" alt="User" />
-                  <AvatarFallback className="bg-orange-400 text-white text-sm">
+                  <AvatarFallback className="bg-[#99ccee] text-white text-sm">
                     {user.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
@@ -402,7 +404,7 @@ function SidebarContent({
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src="" alt="User" />
-                      <AvatarFallback className="bg-orange-400 text-white">
+                      <AvatarFallback className="bg-[#99ccee] text-white">
                         {user.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>

@@ -97,9 +97,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           </div>
         </div>
       </form>
-      <div className="mt-2 text-center text-xs text-gray-500">
-        ChatGPT can make mistakes. Check important info.
-      </div>
+      <div className="mt-2 text-center text-xs text-gray-500"></div>
     </div>
   )
 }

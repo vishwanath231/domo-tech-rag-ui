@@ -26,7 +26,7 @@ export function WelcomeScreen() {
 
   return (
     <div className="flex h-full flex-col items-center justify-center px-4 pb-32">
-      <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+      <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-full bg-[#99ccee]">
         <Sparkles className="h-8 w-8 text-white" />
       </div>
       

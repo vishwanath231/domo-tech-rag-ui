@@ -71,7 +71,7 @@ export function ChatList({ messages, isTyping }: ChatListProps) {
 
       {/* Scroll to bottom button */}
       {showScrollButton && (
-        <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-10">
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10">
           <Button
             onClick={scrollToBottom}
             size="icon"
