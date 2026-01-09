@@ -4,7 +4,7 @@ import { ChatList } from "@/components/chat/ChatList";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { WelcomeScreen } from "@/components/chat/WelcomeScreen";
 import { useChatStore } from "@/lib/store";
-import { streamResponse } from "@/lib/ai-service";
+import { mcpStreamResponse, streamResponse } from "@/lib/ai-service";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import GoogleLoginButton from "./components/GoogleLoginButton";
@@ -28,79 +28,121 @@ function App() {
   const handleSendMessage = async (content: string) => {
     if (!currentChatId) return;
 
-    const user_id = JSON.parse(localStorage.getItem("user") || "{}")?._id;
-    const session_id = localStorage.getItem("session_id");
+    // check model type
+    const chat_type = localStorage.getItem("chat_type") || "Chat";
 
-    if (!session_id || session_id === "" || session_id === null) {
-      console.log("No session ID found, creating new session");
-      fetch(`http://127.0.0.1:8000/chat/session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_id,
-          title: content,
-        }),
-      })
-        .then((res) => res.json())
-        .then(async (data) => {
-          localStorage.setItem("session_id", data.session._id);
-          // Add user message
-          const userMessageId = uuidv4();
-          addMessage(currentChatId, {
-            id: userMessageId,
-            role: "user",
-            content,
-          });
-
-          // Add assistant message placeholder
-          const assistantMessageId = uuidv4();
-          addMessage(currentChatId, {
-            id: assistantMessageId,
-            role: "assistant",
-            content: "",
-          });
-
-          setIsTyping(true);
-
-          try {
-            // Stream the response
-            let fullResponse = "";
-            await streamResponse(content, (chunk) => {
-              setIsTyping(false);
-              fullResponse += chunk;
+    if (chat_type === "Chat") {
+      const user_id = JSON.parse(localStorage.getItem("user") || "{}")?._id;
+      const session_id = localStorage.getItem("session_id");
+  
+      if (!session_id || session_id === "" || session_id === null) {
+        console.log("No session ID found, creating new session");
+        fetch(`http://127.0.0.1:8000/chat/session`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id,
+            title: content,
+          }),
+        })
+          .then((res) => res.json())
+          .then(async (data) => {
+            localStorage.setItem("session_id", data.session._id);
+            // Add user message
+            const userMessageId = uuidv4();
+            addMessage(currentChatId, {
+              id: userMessageId,
+              role: "user",
+              content,
+            });
+  
+            // Add assistant message placeholder
+            const assistantMessageId = uuidv4();
+            addMessage(currentChatId, {
+              id: assistantMessageId,
+              role: "assistant",
+              content: "",
+            });
+  
+            setIsTyping(true);
+  
+            try {
+              // Stream the response
+              let fullResponse = "";
+              await streamResponse(content, (chunk) => {
+                setIsTyping(false);
+                fullResponse += chunk;
+                updateMessageContent(
+                  currentChatId,
+                  assistantMessageId,
+                  fullResponse
+                );
+              });
+            } catch (error) {
+              console.error("Error streaming response:", error);
               updateMessageContent(
                 currentChatId,
                 assistantMessageId,
-                fullResponse
+                "Sorry, I encountered an error. Please try again."
               );
-            });
-          } catch (error) {
-            console.error("Error streaming response:", error);
-            updateMessageContent(
-              currentChatId,
-              assistantMessageId,
-              "Sorry, I encountered an error. Please try again."
-            );
-          } finally {
-            setIsTyping(false);
-          }
-        })
-        .catch((error) => {
-          console.error("Error creating session:", error);
+            } finally {
+              setIsTyping(false);
+            }
+          })
+          .catch((error) => {
+            console.error("Error creating session:", error);
+          });
+      } else {
+        // Add user message
+        const userMessageId = uuidv4();
+        addMessage(currentChatId, {
+          id: userMessageId,
+          role: "user",
+          content,
         });
-    } else {
+  
+        // Add assistant message placeholder
+        const assistantMessageId = uuidv4();
+        addMessage(currentChatId, {
+          id: assistantMessageId,
+          role: "assistant",
+          content: "",
+        });
+  
+        setIsTyping(true);
+  
+        try {
+          // Stream the response
+          let fullResponse = "";
+          await streamResponse(content, (chunk) => {
+            setIsTyping(false);
+            fullResponse += chunk;
+            updateMessageContent(currentChatId, assistantMessageId, fullResponse);
+          });
+        } catch (error) {
+          console.error("Error streaming response:", error);
+          updateMessageContent(
+            currentChatId,
+            assistantMessageId,
+            "Sorry, I encountered an error. Please try again."
+          );
+        } finally {
+          setIsTyping(false);
+        }
+      }
+    }else if (chat_type === "MCP Server") {
+      const assistantMessageId = uuidv4();
+
       // Add user message
-      const userMessageId = uuidv4();
       addMessage(currentChatId, {
-        id: userMessageId,
+        id: uuidv4(),
         role: "user",
         content,
       });
 
       // Add assistant message placeholder
-      const assistantMessageId = uuidv4();
       addMessage(currentChatId, {
         id: assistantMessageId,
         role: "assistant",
@@ -109,25 +151,16 @@ function App() {
 
       setIsTyping(true);
 
-      try {
-        // Stream the response
-        let fullResponse = "";
-        await streamResponse(content, (chunk) => {
-          setIsTyping(false);
-          fullResponse += chunk;
-          updateMessageContent(currentChatId, assistantMessageId, fullResponse);
-        });
-      } catch (error) {
-        console.error("Error streaming response:", error);
-        updateMessageContent(
-          currentChatId,
-          assistantMessageId,
-          "Sorry, I encountered an error. Please try again."
-        );
-      } finally {
+      let fullResponse = "";
+      await mcpStreamResponse(content, (chunk) => {
         setIsTyping(false);
-      }
+        updateMessageContent(currentChatId, assistantMessageId, fullResponse += chunk);
+      });
+
+      console.log("Full MCP Response:", fullResponse);
     }
+      
+
   };
 
   // The store's addMessage currently returns void.

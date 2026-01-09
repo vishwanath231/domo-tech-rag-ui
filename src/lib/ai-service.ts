@@ -23,10 +23,49 @@ export async function streamResponse(
 
   // Split the answer into chunks for streaming effect
   const chunks = assistantAnswer.split("");
+  const BATCH_SIZE = 6;
 
-  for (const chunk of chunks) {
-    // Simulate typing speed (very fast)
-    await new Promise((resolve) => setTimeout(resolve, 1 + Math.random() * 2));
-    onChunk(chunk);
+  for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+    onChunk(chunks.slice(i, i + BATCH_SIZE).join(""));
+    await new Promise((r) => setTimeout(r, 1));
   }
+
+  // for (const chunk of chunks) {
+  //   // Simulate typing speed (fast and snappy)
+  //   await new Promise((resolve) => setTimeout(resolve, 3 + Math.random() * 5));
+  //   onChunk(chunk);
+  // }
+}
+
+export async function mcpStreamResponse(
+  prompt: string,
+  onChunk: (chunk: string) => void
+) {
+  const response = await fetch(`http://localhost:5000/prompt`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: prompt,
+    }),
+  });
+  const data = await response.json();
+
+  const assistantAnswer = data?.reply || "";
+
+  const chunks = assistantAnswer.split("");
+
+  const BATCH_SIZE = 6;
+
+  for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+    onChunk(chunks.slice(i, i + BATCH_SIZE).join(""));
+    await new Promise((r) => setTimeout(r, 1));
+  }
+
+  // for (const chunk of chunks) {
+  //   // Simulate typing speed (fast and snappy)
+  //   await new Promise((resolve) => setTimeout(resolve, 3 + Math.random() * 5));
+  //   onChunk(chunk);
+  // }
 }

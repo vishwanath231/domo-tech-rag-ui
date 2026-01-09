@@ -11,11 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import {
@@ -114,7 +110,11 @@ function SidebarContent({
     window.location.reload();
   };
 
-  const handleChatHistoryClick = (sessionId: string, title: string, closeModal = false) => {
+  const handleChatHistoryClick = (
+    sessionId: string,
+    title: string,
+    closeModal = false
+  ) => {
     localStorage.setItem("session_id", sessionId);
 
     // Fetch messages for the selected session
@@ -336,7 +336,15 @@ function SidebarContent({
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" alt="User" />
                   <AvatarFallback className="bg-[#99ccee] text-white text-sm">
-                    {user.name.charAt(0)}
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt="User"
+                        className="w-full h-full"
+                      />
+                    ) : (
+                      user.name.charAt(0)
+                    )}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -348,7 +356,15 @@ function SidebarContent({
                     <Avatar className="h-10 w-10">
                       <AvatarImage src="" alt="User" />
                       <AvatarFallback className="bg-[#99ccee] text-white">
-                        {user.name.charAt(0)}
+                        {user.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt="User"
+                            className="w-full h-full"
+                          />
+                        ) : (
+                          user.name.charAt(0)
+                        )}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 overflow-hidden">
@@ -385,7 +401,15 @@ function SidebarContent({
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" alt="User" />
                   <AvatarFallback className="bg-[#99ccee] text-white text-sm">
-                    {user.name.charAt(0)}
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt="User"
+                        className="w-full h-full"
+                      />
+                    ) : (
+                      user.name.charAt(0)
+                    )}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-1 flex-col items-start overflow-hidden">
@@ -405,7 +429,15 @@ function SidebarContent({
                     <Avatar className="h-10 w-10">
                       <AvatarImage src="" alt="User" />
                       <AvatarFallback className="bg-[#99ccee] text-white">
-                        {user.name.charAt(0)}
+                        {user.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt="User"
+                            className="w-full h-full"
+                          />
+                        ) : (
+                          user.name.charAt(0)
+                        )}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 overflow-hidden">
@@ -483,33 +515,35 @@ function SidebarContent({
             {/* Grouped Chat History */}
             <div className="p-3">
               {Object.keys(filteredAndGroupedChats).length > 0 ? (
-                Object.entries(filteredAndGroupedChats).map(([group, sessions]) => (
-                  <div key={group} className="mb-4">
-                    <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      {group}
-                    </h3>
-                    <div className="space-y-1">
-                      {sessions.map((session: any) => (
-                        <button
-                          key={session._id}
-                          className="cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-gray-700 transition-all hover:bg-gray-100"
-                          onClick={() =>
-                            handleChatHistoryClick(
-                              session._id,
-                              session.title || "Untitled Chat",
-                              true
-                            )
-                          }
-                        >
-                          <MessageSquare className="h-4 w-4 flex-shrink-0 text-gray-400" />
-                          <span className="flex-1 truncate text-sm">
-                            {session.title || "Untitled Chat"}
-                          </span>
-                        </button>
-                      ))}
+                Object.entries(filteredAndGroupedChats).map(
+                  ([group, sessions]) => (
+                    <div key={group} className="mb-4">
+                      <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        {group}
+                      </h3>
+                      <div className="space-y-1">
+                        {sessions.map((session: any) => (
+                          <button
+                            key={session._id}
+                            className="cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-gray-700 transition-all hover:bg-gray-100"
+                            onClick={() =>
+                              handleChatHistoryClick(
+                                session._id,
+                                session.title || "Untitled Chat",
+                                true
+                              )
+                            }
+                          >
+                            <MessageSquare className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                            <span className="flex-1 truncate text-sm">
+                              {session.title || "Untitled Chat"}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  )
+                )
               ) : (
                 <div className="px-3 py-8 text-center">
                   <MessageSquare className="mx-auto mb-2 h-8 w-8 text-gray-300" />

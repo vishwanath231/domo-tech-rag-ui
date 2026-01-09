@@ -1,17 +1,37 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { ChevronDown, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 const models = [
-  { id: "llama-3.1-8b-instant", name: "llama-3.1-8b-instant", description: "Fast model" },
-  { id: "openai/gpt-oss-120b", name: "openai/gpt-oss-120b", description: "Most powerful" },
-  { id: "openai/gpt-oss-20b", name: "openai/gpt-oss-20b", description: "Balanced model" },
+  { id: "1", name: "Chat", description: "Normal chatbot" },
+  { id: "2", name: "MCP Server", description: "MCP chatbot" },
 ]
 
 export function ModelSelector() {
   const [selectedModel, setSelectedModel] = useState(models[0]) // Default to GPT-3.5
   const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    // You can add logic here to persist the selected model if needed
+    const savedModelId = localStorage.getItem("chat_type")
+    if (savedModelId) {
+      const model = models.find((m) => m.name === savedModelId)
+      if (model) {
+        setSelectedModel(model)
+      }
+    }else {
+      setSelectedModel(models[0])
+      localStorage.setItem("chat_type", models[0].name)
+    }
+  }, [])
+
+  const handleSelectModel = (model: { id: string; name: string; description: string }) => {
+    setSelectedModel(model)
+    localStorage.setItem("chat_type", model.name)
+    setOpen(false)
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -33,10 +53,7 @@ export function ModelSelector() {
             <button
               key={model.id}
               className="w-full flex items-start justify-between gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-gray-100 transition-colors"
-              onClick={() => {
-                setSelectedModel(model)
-                setOpen(false)
-              }}
+              onClick={() => handleSelectModel(model)}
             >
               <div className="flex flex-col gap-0.5">
                 <span className="font-semibold text-gray-900">{model.name}</span>
