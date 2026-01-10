@@ -41,18 +41,19 @@ export async function mcpStreamResponse(
   prompt: string,
   onChunk: (chunk: string) => void
 ) {
-  const response = await fetch(`http://localhost:5000/prompt`, {
+  const response = await fetch(`http://localhost:3000/chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      message: prompt,
+      provider: "groq",
+      prompt: prompt,
     }),
   });
   const data = await response.json();
 
-  const assistantAnswer = data?.reply || "";
+  const assistantAnswer = data?.response || "";
 
   const chunks = assistantAnswer.split("");
 
